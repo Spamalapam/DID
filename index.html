@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Adam System Atlas v37.12 - Deep Containment</title>
+    <title>Adam System Atlas v37.13 - High-Gain</title>
     <style>
         /* THEME: Bio-Digital Dark Mode */
         :root {
@@ -132,7 +132,7 @@
 
 <div id="hud">
     <h1>
-        <span>SYSTEM ATLAS v37.12</span>
+        <span>SYSTEM ATLAS v37.13</span>
         <span id="active-count" style="font-size:10px; color:#666">0 ACTIVE</span>
     </h1>
     
@@ -192,6 +192,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+    // --- 1. COORDINATE SYSTEM (ANATOMICAL) ---
     const ROI = { 
         DLPFC_L: {x:2.5, y:3, z:4}, DLPFC_R: {x:-2.5, y:3, z:4}, VMPFC: {x:0, y:-1, z:5}, OFC: {x:0, y:-2.5, z:4.5}, 
         Rostral_PFC: {x:0, y:4.5, z:5}, mPFC: {x:0, y:1, z:5.5}, Broca: {x:4.5, y:0.5, z:3}, SMA: {x:0, y:5, z:0},
@@ -290,11 +291,10 @@
         });
         document.getElementById('inject-btn').addEventListener('click', addAlter);
 
-        // --- SAFE SCALING to ensure fit ---
         Object.keys(ROI).forEach(k => {
-            ROI[k].y *= 0.55; // Reduced Y
-            ROI[k].z *= 0.8;  // Reduced Z
-            ROI[k].x *= 0.9;  // Reduced X to stay well within
+            ROI[k].y *= 0.55; 
+            ROI[k].z *= 0.8;  
+            ROI[k].x *= 0.9;  
         });
 
         const vp = document.getElementById('viewport');
@@ -328,11 +328,9 @@
         animate();
     }
 
-    // --- 1. ANATOMICAL VOLUME GENERATION (SDF) ---
     function isInsideBrainVolume(x, y, z) {
         const xOffset = 0.4; 
         
-        // Slightly larger radii for the visual cloud
         let dxR = x - xOffset;
         let dy = y - 0.5; 
         let dz = z;
@@ -372,7 +370,8 @@
         const geo = new THREE.BufferGeometry();
         const pos = [], col = [];
         
-        const baseColor = {r: 0.45, g: 0.65, b: 0.95};
+        // High visibility colors
+        const baseColor = {r: 0.5, g: 0.7, b: 1.0};
         const pointCount = 120000; 
         const boundingBox = 8;    
 
@@ -395,11 +394,12 @@
         geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
         
+        // MAX OPACITY + SIZE
         const mat = new THREE.PointsMaterial({ 
-            size: 0.07, 
+            size: 0.08, 
             vertexColors: true, 
             transparent: true, 
-            opacity: 0.95, 
+            opacity: 1.0, 
             blending: THREE.AdditiveBlending 
         });
         
@@ -407,15 +407,11 @@
         brainGroup.add(brainMesh);
     }
 
-    // --- 2. DEEP TISSUE CONTAINMENT ---
-    
-    // Aggressive clamp to ensure point is deep inside (90% boundary)
     function clampToDeepTissue(targetPos) {
         let inner = new THREE.Vector3(0,0,0);
         let outer = targetPos.clone();
         let mid = new THREE.Vector3();
         
-        // Find boundary
         for(let i=0; i<15; i++) { 
             mid.lerpVectors(inner, outer, 0.5);
             if(isInsideBrainVolume(mid.x, mid.y, mid.z)) {
@@ -424,7 +420,6 @@
                 outer.copy(mid);
             }
         }
-        // Pull back 10% towards center
         return inner.multiplyScalar(0.9);
     }
 
@@ -450,7 +445,6 @@
         const group = new THREE.Group();
 
         let rawPos = new THREE.Vector3(data.loc.x, data.loc.y, data.loc.z);
-        // Force hub deep inside
         let finalPos = clampToDeepTissue(rawPos);
 
         const hubGeo = new THREE.SphereGeometry(0.4, 16, 16); 
@@ -482,31 +476,22 @@
 
                 let next = cursor.clone().add(dir.clone().multiplyScalar(stepLen));
                 
-                // REFLECTIVE FOLDING
                 if(!isInsideBrainVolume(next.x, next.y, next.z)) {
-                    // 1. Find hit point
                     let hit = findBoundaryIntersection(cursor, next);
                     
-                    // 2. Draw to hit
                     pts.push(cursor.x, cursor.y, cursor.z);
                     pts.push(hit.x, hit.y, hit.z);
                     let alpha = 0.8 - (s/steps); 
                     cols.push(1,1,1, alpha); 
                     cols.push(1,1,1, alpha); 
 
-                    // 3. Move cursor to hit
                     cursor.copy(hit);
 
-                    // 4. STRICT INWARD REFLECTION
-                    // Direction is strictly towards origin (center of brain)
                     let inward = new THREE.Vector3(0,0,0).sub(hit).normalize();
-                    // Add slight jitter but keep it mostly inward
                     dir.copy(inward).addScalar((Math.random()-0.5)*0.2).normalize();
                     
-                    // 5. Recalculate next
                     next = cursor.clone().add(dir.clone().multiplyScalar(stepLen));
                     
-                    // If STILL outside (very rare corner case), clamp it hard
                     if(!isInsideBrainVolume(next.x, next.y, next.z)) {
                         next = clampToDeepTissue(next);
                     }
@@ -665,10 +650,19 @@
     }
 
     let isDragging=false, prevMouse={x:0, y:0};
+    let initialPinchDist = null;
+    let initialCamZ = 55;
+
+    function getPinchDist(e) {
+        let dx = e.touches[0].clientX - e.touches[1].clientX;
+        let dy = e.touches[0].clientY - e.touches[1].clientY;
+        return Math.sqrt(dx*dx + dy*dy);
+    }
     
     function setupInteraction() {
         const vp = document.getElementById('viewport');
         
+        // MOUSE
         vp.addEventListener('mousedown', e=>{ prevMouse={x:e.clientX, y:e.clientY}; if(e.button===0) isDragging=true; });
         document.addEventListener('mouseup', ()=>{ isDragging=false; });
         document.addEventListener('mousemove', e=>{
@@ -680,16 +674,25 @@
             prevMouse={x:e.clientX, y:e.clientY};
         });
 
+        // TOUCH (Mobile)
         vp.addEventListener('touchstart', e=>{ 
             if(e.touches.length === 1) {
                 prevMouse={x:e.touches[0].clientX, y:e.touches[0].clientY}; 
                 isDragging=true; 
+            } else if (e.touches.length === 2) {
+                isDragging = false; // Stop rotating
+                initialPinchDist = getPinchDist(e);
+                initialCamZ = camera.position.z;
             }
         }, {passive: false});
         
-        document.addEventListener('touchend', ()=>{ isDragging=false; });
+        document.addEventListener('touchend', ()=>{ 
+            isDragging=false; 
+            initialPinchDist = null; 
+        });
         
         document.addEventListener('touchmove', e=>{
+            // ONE FINGER ROTATE
             if(isDragging && e.touches.length === 1) {
                 e.preventDefault(); 
                 const dx=e.touches[0].clientX-prevMouse.x;
@@ -697,6 +700,19 @@
                 brainGroup.rotation.y += dx*0.005;
                 brainGroup.rotation.x += dy*0.005;
                 prevMouse={x:e.touches[0].clientX, y:e.touches[0].clientY};
+            }
+            // TWO FINGER ZOOM
+            else if (e.touches.length === 2 && initialPinchDist) {
+                e.preventDefault();
+                let newDist = getPinchDist(e);
+                let delta = initialPinchDist - newDist;
+                
+                // Sensitivity multiplier
+                let newZ = initialCamZ + (delta * 0.1); 
+                // Clamp zoom
+                newZ = Math.max(10, Math.min(newZ, 100));
+                
+                camera.position.z = newZ;
             }
         }, {passive: false});
 
@@ -710,7 +726,7 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        if(!isDragging) brainGroup.rotation.y += 0.002;
+        if(!isDragging && !initialPinchDist) brainGroup.rotation.y += 0.002;
         renderer.render(scene, camera);
     }
 
@@ -718,3 +734,5 @@
 </script>
 </body>
 </html>
+
+
