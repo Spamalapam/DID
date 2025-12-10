@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Adam System Atlas v37.13 - High-Gain</title>
+    <title>Adam System Atlas v39.0 - Pulse Update</title>
     <style>
         /* THEME: Bio-Digital Dark Mode */
         :root {
             --bg: #020406;
             --panel: rgba(13, 17, 23, 0.95);
             --accent: #00f0ff; /* Cyan */
+            --driver: #fff;     /* Pure White for Driver */
+            --passenger: #00f0ff; /* Cyan for Passenger */
+            --backseat: #445566;  /* Dim Blue-Grey for others */
             --text: #e0f0ff;
             --dim: #64748b;
             --danger: #ff2a2a;
@@ -17,11 +20,11 @@
             --good: #00ff88;
         }
 
-        body { margin: 0; overflow: hidden; background: var(--bg); font-family: 'JetBrains Mono', monospace; color: var(--text); display: flex; width: 100vw; height: 100vh; }
+        body { margin: 0; overflow: hidden; background: var(--bg); font-family: 'JetBrains Mono', monospace; color: var(--text); display: flex; }
         
         #viewport { 
             width: 72%; 
-            height: 100%; 
+            height: 100vh; 
             background: radial-gradient(circle at 50% 50%, #1a1f29 0%, #000000 100%); 
             position: relative; 
             cursor: crosshair; 
@@ -30,7 +33,7 @@
 
         #hud { 
             width: 28%; 
-            height: 100%; 
+            height: 100vh; 
             background: var(--panel); 
             border-left: 1px solid #333; 
             display: flex; 
@@ -40,24 +43,14 @@
             box-shadow: -20px 0 50px #000; 
         }
 
+        /* Mobile Adjustments */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             #viewport { width: 100%; height: 55vh; }
-            #hud { 
-                width: 100%; 
-                height: 45vh; 
-                border-left: none; 
-                border-top: 1px solid #333; 
-                box-shadow: 0 -20px 50px #000; 
-            }
-            h1 { font-size: 12px !important; padding: 10px 15px !important; }
-            .control-box { margin-bottom: 8px !important; }
-            button.inject-btn { padding: 0 12px; font-size: 11px; }
-            #view-label { font-size: 9px; bottom: 10px; left: 10px; }
-            #reset-view { top: 10px; right: 10px; padding: 6px 12px; font-size: 9px; }
+            #hud { width: 100%; height: 45vh; border-left: none; border-top: 1px solid #333; }
         }
 
-        .scroll-zone { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+        .scroll-zone { padding: 20px; overflow-y: auto; flex-grow: 1; }
         .scroll-zone::-webkit-scrollbar { width: 4px; }
         .scroll-zone::-webkit-scrollbar-thumb { background: #334155; }
 
@@ -74,53 +67,65 @@
             border-bottom: 1px solid #333; padding-bottom: 4px; 
         }
 
+        /* CONTROLS */
         .control-box { display: flex; gap: 0; margin-bottom: 15px; border: 1px solid #333; border-radius: 4px; }
         select { flex-grow: 1; background: #000; color: #fff; border: none; padding: 10px; font-family: inherit; font-size: 11px; outline: none; }
         button.inject-btn { background: var(--accent); color: #000; border: none; padding: 0 15px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 10px; }
         button.inject-btn:hover { background: #fff; }
 
-        #active-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; margin-bottom: 10px; }
-        .chip { background: #1a2233; border: 1px solid #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; display: flex; align-items: center; animation: slideIn 0.2s ease; }
-        .chip-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; }
-        .chip-x { margin-left: 8px; color: #555; cursor: pointer; font-weight: bold; }
-        .chip-x:hover { color: var(--danger); }
-
-        .meter-container { margin-bottom: 12px; }
-        .meter-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; color: #ccc; }
-        .meter-bg { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; position: relative; }
-        .meter-fill { height: 100%; transition: width 0.5s ease, background-color 0.5s ease; width: 0%; }
+        /* HIERARCHY LIST */
+        #hierarchy-list { display: flex; flex-direction: column; gap: 6px; min-height: 20px; margin-bottom: 10px; }
         
-        .sys-good { background: var(--good); box-shadow: 0 0 10px var(--good); }
-        .sys-warn { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
-        .sys-danger { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+        .role-card { 
+            background: #111; border: 1px solid #333; padding: 8px; border-radius: 4px; 
+            display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.2s ease;
+        }
 
+        .role-driver { border-left: 4px solid #fff; background: linear-gradient(90deg, #222, #111); box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+        .role-passenger { border-left: 4px solid var(--accent); background: #151922; }
+        .role-backseat { border-left: 4px solid #333; opacity: 0.6; }
+
+        .role-info { display: flex; align-items: center; }
+        .role-badge { 
+            font-size: 9px; font-weight: bold; text-transform: uppercase; 
+            padding: 2px 6px; border-radius: 3px; margin-right: 8px; min-width: 50px; text-align: center;
+        }
+        .badge-driver { background: #fff; color: #000; }
+        .badge-passenger { background: var(--accent); color: #000; }
+        .badge-backseat { background: #333; color: #888; }
+
+        .role-name { font-size: 12px; font-weight: bold; }
+
+        .role-actions { display: flex; gap: 4px; }
+        .act-btn { 
+            background: none; border: 1px solid #333; color: #666; 
+            width: 20px; height: 20px; border-radius: 3px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; font-size: 10px;
+        }
+        .act-btn:hover { border-color: #666; color: #fff; }
+        .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* EXECUTIVE CONSOLE */
         #console-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1px;
-            background: #333;
+            background: #333; 
             border: 1px solid #333;
             margin-top: 10px;
         }
-        .console-cell {
-            background: #0b1016;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .console-header { font-size: 9px; color: #556; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .console-cell { background: #0b1016; padding: 10px; display: flex; flex-direction: column; justify-content: center; }
+        .console-header { font-size: 9px; color: #556; text-transform: uppercase; margin-bottom: 4px; }
         .console-data { font-size: 11px; font-weight: 700; color: #eee; }
         
         .stat-crit { color: var(--danger); }
         .stat-warn { color: var(--warn); }
         .stat-good { color: var(--good); }
-        .stat-neutral { color: var(--dim); }
 
-        #reset-view { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; cursor: pointer; font-size: 10px; letter-spacing: 1px; border-radius: 4px; }
+        /* OVERLAYS */
+        #reset-view { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; cursor: pointer; font-size: 10px; letter-spacing: 1px; border-radius: 4px; z-index: 200; }
         #view-label { position: absolute; bottom: 20px; left: 20px; color: var(--dim); font-size: 10px; pointer-events: none; }
-
-        @keyframes slideIn { from { opacity:0; transform: translateX(5px); } to { opacity:1; transform: translateX(0); } }
     </style>
 </head>
 <body>
@@ -132,7 +137,7 @@
 
 <div id="hud">
     <h1>
-        <span>SYSTEM ATLAS v37.13</span>
+        <span>SYSTEM ATLAS v39.0</span>
         <span id="active-count" style="font-size:10px; color:#666">0 ACTIVE</span>
     </h1>
     
@@ -141,39 +146,19 @@
             <select id="alter-select"></select>
             <button class="inject-btn" id="inject-btn">Inject</button>
         </div>
-        <div id="active-list"></div>
-
-        <div class="section-label">Real-Time Biometrics</div>
         
-        <div class="meter-container">
-            <div class="meter-label">
-                <span>SYSTEM COHESION</span>
-                <span id="cohesion-val">100%</span>
-            </div>
-            <div class="meter-bg">
-                <div id="cohesion-bar" class="meter-fill sys-good" style="width: 100%;"></div>
-            </div>
-        </div>
-
-        <div class="meter-container">
-            <div class="meter-label">
-                <span>NET ENERGY / MOOD</span>
-                <span id="mood-val">NEUTRAL</span>
-            </div>
-            <div class="meter-bg">
-                <div id="mood-bar" class="meter-fill" style="width: 0%; background: #fff;"></div>
-            </div>
-        </div>
+        <div class="section-label">Hierarchy (Front → Back)</div>
+        <div id="hierarchy-list"></div>
 
         <div class="section-label">Executive Function State</div>
         <div id="console-grid">
             <div class="console-cell">
-                <div class="console-header">Synergy</div>
-                <div class="console-data stat-neutral" id="val-synergy">--</div>
+                <div class="console-header">Dominant Mode</div>
+                <div class="console-data stat-neutral" id="val-mode">--</div>
             </div>
             <div class="console-cell">
-                <div class="console-header">Drift</div>
-                <div class="console-data stat-neutral" id="val-drift">--</div>
+                <div class="console-header">Fronting Complexity</div>
+                <div class="console-data stat-neutral" id="val-complex">--</div>
             </div>
             <div class="console-cell">
                 <div class="console-header">Cognitive Load</div>
@@ -194,20 +179,25 @@
 <script>
     // --- 1. COORDINATE SYSTEM (ANATOMICAL) ---
     const ROI = { 
-        DLPFC_L: {x:2.5, y:3, z:4}, DLPFC_R: {x:-2.5, y:3, z:4}, VMPFC: {x:0, y:-1, z:5}, OFC: {x:0, y:-2.5, z:4.5}, 
-        Rostral_PFC: {x:0, y:4.5, z:5}, mPFC: {x:0, y:1, z:5.5}, Broca: {x:4.5, y:0.5, z:3}, SMA: {x:0, y:5, z:0},
-        Motor: {x:0, y:5.5, z:-1}, Premotor: {x:-2, y:4.5, z:1}, Parietal_R: {x:-4, y:4, z:-3}, TPJ_R: {x:-4.5, y:1, z:-2.5},
-        TPJ_L: {x:4.5, y:1, z:-2.5}, Somato: {x:0, y:4, z:-1.5}, SPL: {x:0, y:5, z:-3},
-        Temp_Pole_L: {x:3.5, y:-2.5, z:3}, Wernicke: {x:5, y:-1, z:-2}, Amygdala: {x:-1.5, y:-3, z:1}, 
-        Hippo: {x:-2, y:-3, z:-1}, Insula: {x:0, y:-0.5, z:1}, Ant_Insula: {x:0, y:-0.2, z:2},
-        ACC: {x:0, y:1, z:2}, sgACC: {x:0, y:-1.5, z:3.5}, PCC: {x:0, y:1, z:-3}, Striatum: {x:0, y:-0.5, z:1.5}, 
-        NucAcc: {x:0, y:-1.5, z:2}, Caudate: {x:1, y:0, z:2}, VTA: {x:0, y:-2, z:0}, Thalamus: {x:0, y:-1, z:0},
+        DLPFC_L: {x:2.5, y:3, z:4}, DLPFC_R: {x:-2.5, y:3, z:4}, 
+        VMPFC: {x:0, y:-1, z:5}, OFC: {x:0, y:-2.5, z:4.5}, 
+        Rostral_PFC: {x:0, y:4.5, z:5}, mPFC: {x:0, y:1, z:5.5}, 
+        Broca: {x:4.5, y:0.5, z:3}, SMA: {x:0, y:5, z:0},
+        Motor: {x:0, y:5.5, z:-1}, Premotor: {x:-2, y:4.5, z:1}, 
+        Parietal_R: {x:-4, y:4, z:-3}, TPJ_R: {x:-4.5, y:1, z:-2.5}, 
+        Somato: {x:0, y:4, z:-1.5}, SPL: {x:0, y:5, z:-3},
+        Temp_Pole_L: {x:3.5, y:-2.5, z:3}, Wernicke: {x:5, y:-1, z:-2},       
+        Amygdala: {x:-1.5, y:-3, z:1}, Hippo: {x:-2, y:-3, z:-1}, Insula: {x:0, y:-0.5, z:1}, 
+        ACC: {x:0, y:1, z:2}, sgACC: {x:0, y:-1.5, z:3.5}, PCC: {x:0, y:1, z:-3}, 
+        Striatum: {x:0, y:-0.5, z:1.5}, NucAcc: {x:0, y:-1.5, z:2}, Caudate: {x:1, y:0, z:2}, 
+        VTA: {x:0, y:-2, z:0}, Thalamus: {x:0, y:-1, z:0},
         V1: {x:0, y:-1, z:-6}, V4: {x:-2, y:-2, z:-6}, Fusiform: {x:-3, y:-4, z:-4}, EBA: {x:-4, y:-1, z:-5},
-        Brainstem: {x:0, y:-5, z:-1}, PAG: {x:0, y:-4, z:-0.5}, VLPO: {x:0, y:-4, z:1}, Locus_C: {x:0, y:-4.5, z:-2}, 
-        Cerebellum: {x:0, y:-5, z:-4}, Vagus: {x:0, y:-6, z:-1}, Olfactory: {x:0, y:-2, z:4},
-        DMN: {x:0, y:2, z:-2}, Global: {x:0, y:0, z:0}
+        Brainstem: {x:0, y:-5, z:-1}, PAG: {x:0, y:-4, z:-0.5}, VLPO: {x:0, y:-4, z:1}, 
+        Locus_C: {x:0, y:-4.5, z:-2}, Cerebellum: {x:0, y:-5, z:-4}, Vagus: {x:0, y:-6, z:-1}, 
+        Olfactory: {x:0, y:-2, z:4}, DMN: {x:0, y:2, z:-2}, Global: {x:0, y:0, z:0}
     };
 
+    // --- 2. DATASET (66 ALTERS) ---
     const DB = {
         "Ethan": { c: "#88CCFF", loc: ROI.Wernicke, stats: {e:5, a:3, s:7, d:4, i:2, p:2} },
         "Synthia": { c: "#E0FFFF", loc: ROI.DLPFC_R, stats: {e:7, a:1, s:3, d:3, i:1, p:9} },
@@ -292,16 +282,16 @@
         document.getElementById('inject-btn').addEventListener('click', addAlter);
 
         Object.keys(ROI).forEach(k => {
-            ROI[k].y *= 0.55; 
-            ROI[k].z *= 0.8;  
-            ROI[k].x *= 0.9;  
+            ROI[k].y *= 0.6; 
+            ROI[k].z *= 0.9;  
+            ROI[k].x *= 1.1; 
         });
 
         const vp = document.getElementById('viewport');
         scene = new THREE.Scene();
         
         camera = new THREE.PerspectiveCamera(35, vp.clientWidth / vp.clientHeight, 0.1, 1000);
-        camera.position.set(0, 5, 55); 
+        camera.position.set(0, 5, 50); 
         camera.lookAt(0,0,0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -309,14 +299,14 @@
         renderer.setPixelRatio(window.devicePixelRatio);
         vp.appendChild(renderer.domElement);
 
-        const amb = new THREE.AmbientLight(0xffffff, 0.2);
+        const amb = new THREE.AmbientLight(0xffffff, 0.4); 
         scene.add(amb);
         
-        const spot1 = new THREE.SpotLight(0x00ddee, 1.5);
+        const spot1 = new THREE.SpotLight(0x00ddee, 1.8);
         spot1.position.set(30, 50, 30);
         scene.add(spot1);
 
-        const spot2 = new THREE.SpotLight(0xff0055, 0.8);
+        const spot2 = new THREE.SpotLight(0xff0055, 1.0);
         spot2.position.set(-30, -20, 10);
         scene.add(spot2);
 
@@ -328,51 +318,33 @@
         animate();
     }
 
+    // --- BRAIN BOUNDARIES ---
     function isInsideBrainVolume(x, y, z) {
         const xOffset = 0.4; 
-        
-        let dxR = x - xOffset;
-        let dy = y - 0.5; 
-        let dz = z;
-        let inRight = ( (dxR*dxR)/(4.1*4.1) + (dy*dy)/(3.3*3.3) + (dz*dz)/(5.3*5.3) ) < 1;
-        
+        let dxR = x - xOffset; let dy = y - 0.5; let dz = z;
+        let inRight = ( (dxR*dxR)/(3.8*3.8) + (dy*dy)/(3.0*3.0) + (dz*dz)/(5.0*5.0) ) < 1;
         let dxL = x + xOffset;
-        let inLeft = ( (dxL*dxL)/(4.1*4.1) + (dy*dy)/(3.3*3.3) + (dz*dz)/(5.3*5.3) ) < 1;
-
+        let inLeft = ( (dxL*dxL)/(3.8*3.8) + (dy*dy)/(3.0*3.0) + (dz*dz)/(5.0*5.0) ) < 1;
         if (Math.abs(x) < 0.2 && y > 0) return false;
-
-        let txR = x - 2.8;
-        let ty = y + 1.5; 
-        let tz = z - 0.5;
-        let inTempR = ( (txR*txR)/(2.0*2.0) + (ty*ty)/(1.7*1.7) + (tz*tz)/(2.7*2.7) ) < 1;
-
+        let txR = x - 2.8; let ty = y + 1.5; let tz = z - 0.5;
+        let inTempR = ( (txR*txR)/(1.8*1.8) + (ty*ty)/(1.5*1.5) + (tz*tz)/(2.5*2.5) ) < 1;
         let txL = x + 2.8;
-        let inTempL = ( (txL*txL)/(2.0*2.0) + (ty*ty)/(1.7*1.7) + (tz*tz)/(2.7*2.7) ) < 1;
-
-        let cx = x;
-        let cy = y + 2.0;
-        let cz = z + 3.0; 
-        let inCerebellum = ( (cx*cx)/(4.3*4.3) + (cy*cy)/(1.7*1.7) + (cz*cz)/(2.3*2.3) ) < 1;
-
-        let sx = x;
-        const angle = -0.3; 
-        let sy_raw = y + 2.5;
-        let sz_raw = z + 0.5;
+        let inTempL = ( (txL*txL)/(1.8*1.8) + (ty*ty)/(1.5*1.5) + (tz*tz)/(2.5*2.5) ) < 1;
+        let cx = x; let cy = y + 2.0; let cz = z + 3.0; 
+        let inCerebellum = ( (cx*cx)/(4.0*4.0) + (cy*cy)/(1.5*1.5) + (cz*cz)/(2.0*2.0) ) < 1;
+        let sx = x; const angle = -0.3; 
+        let sy_raw = y + 2.5; let sz_raw = z + 0.5;
         let sy = sy_raw * Math.cos(angle) - sz_raw * Math.sin(angle);
         let sz = sy_raw * Math.sin(angle) + sz_raw * Math.cos(angle);
-        
-        let inStem = ( (sx*sx + sz*sz) < 1.0 ) && (sy > -4.0 && sy < 1.0);
-
+        let inStem = ( (sx*sx + sz*sz) < 0.8 ) && (sy > -3.5 && sy < 1.0);
         return inRight || inLeft || inTempR || inTempL || inCerebellum || inStem;
     }
 
     function generateAnatomicalVolume() {
         const geo = new THREE.BufferGeometry();
         const pos = [], col = [];
-        
-        // High visibility colors
-        const baseColor = {r: 0.5, g: 0.7, b: 1.0};
-        const pointCount = 120000; 
+        const baseColor = {r: 0.6, g: 0.8, b: 1.0}; 
+        const pointCount = 100000; 
         const boundingBox = 8;    
 
         for(let i=0; i<pointCount; i++) {
@@ -384,138 +356,134 @@
                 let n = Math.sin(x*4)*Math.cos(y*4)*Math.sin(z*4);
                 x += n*0.08; y += n*0.08; z += n*0.08;
                 pos.push(x, y, z);
-                
-                let depth = (x*x + y*y + z*z)/30; 
-                let bright = 1.0 - Math.min(depth, 0.7);
+                let depth = (x*x + y*y + z*z)/35; 
+                let bright = 1.0 - Math.min(depth, 0.7); 
                 col.push(baseColor.r * bright, baseColor.g * bright, baseColor.b * bright);
             }
         }
-
         geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
         geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-        
-        // MAX OPACITY + SIZE
-        const mat = new THREE.PointsMaterial({ 
-            size: 0.08, 
-            vertexColors: true, 
-            transparent: true, 
-            opacity: 1.0, 
-            blending: THREE.AdditiveBlending 
-        });
-        
-        const brainMesh = new THREE.Points(geo, mat);
-        brainGroup.add(brainMesh);
+        const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
+        brainGroup.add(new THREE.Points(geo, mat));
     }
 
-    function clampToDeepTissue(targetPos) {
+    function clampToBrainSurface(targetPos) {
+        if(isInsideBrainVolume(targetPos.x, targetPos.y, targetPos.z)) return targetPos;
         let inner = new THREE.Vector3(0,0,0);
         let outer = targetPos.clone();
         let mid = new THREE.Vector3();
-        
-        for(let i=0; i<15; i++) { 
+        for(let i=0; i<10; i++) {
             mid.lerpVectors(inner, outer, 0.5);
-            if(isInsideBrainVolume(mid.x, mid.y, mid.z)) {
-                inner.copy(mid);
-            } else {
-                outer.copy(mid);
-            }
-        }
-        return inner.multiplyScalar(0.9);
-    }
-
-    function findBoundaryIntersection(start, end) {
-        let inner = start.clone();
-        let outer = end.clone();
-        let mid = new THREE.Vector3();
-        
-        for(let i=0; i<15; i++) {
-            mid.lerpVectors(inner, outer, 0.5);
-            if(isInsideBrainVolume(mid.x, mid.y, mid.z)) {
-                inner.copy(mid);
-            } else {
-                outer.copy(mid);
-            }
+            if(isInsideBrainVolume(mid.x, mid.y, mid.z)) inner.copy(mid);
+            else outer.copy(mid);
         }
         return inner;
     }
 
-    function createAlterMesh(name) {
+    // --- 3. DYNAMIC HIERARCHY MESH GENERATION ---
+    // Update logic for Opacity and Pulse capabilities
+    function createAlterMesh(name, rank) {
         const data = DB[name];
         const c = data.c || "#ffffff";
         const group = new THREE.Group();
 
         let rawPos = new THREE.Vector3(data.loc.x, data.loc.y, data.loc.z);
-        let finalPos = clampToDeepTissue(rawPos);
+        let finalPos = clampToBrainSurface(rawPos);
 
+        let linesCount, subNodeCount, opacityBase, glowSize;
+        
+        // --- RANKING LOGIC UPDATES ---
+        // Rank 0 = Driver
+        // Rank 1 = Passenger
+        // Rank 2+ = Backseat
+
+        // Visibility / Opacity Logic
+        if (rank === 0) opacityBase = 1.0;
+        else if (rank === 1) opacityBase = 1.0; // Passenger also 100%
+        else {
+            // Decrease by 5% per rank starting at Rank 2 (3rd slot)
+            // Rank 2 = 0.95, Rank 3 = 0.90 ...
+            opacityBase = Math.max(0.6, 1.0 - ((rank - 1) * 0.05));
+        }
+
+        // Structural Logic
+        if (rank === 0) { // DRIVER: Huge
+            linesCount = 350; subNodeCount = 20; glowSize = 1.2;
+        } else if (rank === 1) { // PASSENGER: Normal size
+            linesCount = 150; subNodeCount = 8; glowSize = 0.8;
+        } else { // BACKSEAT: Enhanced visibility (increased from 40 to 80 lines)
+            linesCount = 80; subNodeCount = 4; glowSize = 0.6;
+        }
+
+        // MAIN HUB
         const hubGeo = new THREE.SphereGeometry(0.4, 16, 16); 
-        const hubMat = new THREE.MeshBasicMaterial({ color: c });
+        const hubMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: opacityBase });
         const hub = new THREE.Mesh(hubGeo, hubMat);
         hub.position.copy(finalPos); 
         
-        const glowGeo = new THREE.SphereGeometry(0.8, 16, 16);
-        const glowMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+        const glowGeo = new THREE.SphereGeometry(glowSize, 16, 16);
+        const glowMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: opacityBase * 0.4, blending: THREE.AdditiveBlending });
         const glow = new THREE.Mesh(glowGeo, glowMat);
         hub.add(glow);
         group.add(hub);
 
+        // DATA STORE FOR PULSES
+        group.userData = {
+            paths: [],
+            pulses: [],
+            pulseTimer: 0,
+            rank: rank,
+            color: new THREE.Color(c)
+        };
+
+        // DENDRITES
         const pts = [], cols = [];
         const subNodePositions = []; 
 
-        for(let i=0; i<200; i++) { 
+        for(let i=0; i<linesCount; i++) { 
             let cursor = hub.position.clone();
             let dir = new THREE.Vector3((Math.random()-0.5), (Math.random()-0.5), (Math.random()-0.5)).normalize();
             let len = 2 + Math.random()*4; 
-            let steps = 8;
-            let stepLen = len / steps;
             
-            for(let s=0; s<steps; s++) {
-                dir.x += (Math.random()-0.5)*0.8;
-                dir.y += (Math.random()-0.5)*0.8;
-                dir.z += (Math.random()-0.5)*0.8;
+            let linePoints = [cursor.clone()];
+            for(let s=0; s<8; s++) {
+                dir.x += (Math.random()-0.5)*0.8; dir.y += (Math.random()-0.5)*0.8; dir.z += (Math.random()-0.5)*0.8;
                 dir.normalize();
-
-                let next = cursor.clone().add(dir.clone().multiplyScalar(stepLen));
+                let next = cursor.clone().add(dir.clone().multiplyScalar(len/8));
                 
-                if(!isInsideBrainVolume(next.x, next.y, next.z)) {
-                    let hit = findBoundaryIntersection(cursor, next);
-                    
-                    pts.push(cursor.x, cursor.y, cursor.z);
-                    pts.push(hit.x, hit.y, hit.z);
-                    let alpha = 0.8 - (s/steps); 
-                    cols.push(1,1,1, alpha); 
-                    cols.push(1,1,1, alpha); 
-
-                    cursor.copy(hit);
-
-                    let inward = new THREE.Vector3(0,0,0).sub(hit).normalize();
-                    dir.copy(inward).addScalar((Math.random()-0.5)*0.2).normalize();
-                    
-                    next = cursor.clone().add(dir.clone().multiplyScalar(stepLen));
-                    
-                    if(!isInsideBrainVolume(next.x, next.y, next.z)) {
-                        next = clampToDeepTissue(next);
+                if(isInsideBrainVolume(next.x, next.y, next.z)) {
+                    cursor.copy(next);
+                    linePoints.push(cursor.clone());
+                    let nodeChance = (rank === 0) ? 0.9 : ((rank === 1) ? 0.95 : 0.98);
+                    if (s === 7 && Math.random() > nodeChance && subNodePositions.length < subNodeCount) {
+                        subNodePositions.push(cursor.clone());
                     }
+                } else {
+                    break; 
                 }
+            }
 
-                pts.push(cursor.x, cursor.y, cursor.z);
-                pts.push(next.x, next.y, next.z);
-                let alpha = 0.8 - (s/steps); 
-                cols.push(1,1,1, alpha); 
-                cols.push(1,1,1, alpha - 0.1); 
+            if(linePoints.length > 1) {
+                // Save Path for Pulse Animation
+                group.userData.paths.push(linePoints);
 
-                cursor.copy(next);
-                
-                if (s === steps-1 && Math.random() > 0.85) subNodePositions.push(cursor.clone());
+                for(let k=0; k<linePoints.length-1; k++) {
+                    pts.push(linePoints[k].x, linePoints[k].y, linePoints[k].z);
+                    pts.push(linePoints[k+1].x, linePoints[k+1].y, linePoints[k+1].z);
+                    let alpha = opacityBase * (0.8 - (k/10)); 
+                    cols.push(1,1,1, alpha); 
+                    cols.push(1,1,1, Math.max(0, alpha - 0.1)); 
+                }
             }
         }
 
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
         geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 4));
-        const mat = new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+        const mat = new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: opacityBase, blending: THREE.AdditiveBlending });
         group.add(new THREE.LineSegments(geo, mat));
 
-        const subMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.6 });
+        const subMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: opacityBase * 0.6 });
         const subGeo = new THREE.SphereGeometry(0.1, 8, 8);
         subNodePositions.forEach(pos => {
             const sn = new THREE.Mesh(subGeo, subMat);
@@ -527,97 +495,78 @@
         VISUAL_OBJECTS[name] = group;
     }
 
+    // --- 4. LOGIC ENGINE ---
+    function regenerateScene() {
+        Object.keys(VISUAL_OBJECTS).forEach(key => {
+            brainGroup.remove(VISUAL_OBJECTS[key]);
+            delete VISUAL_OBJECTS[key];
+        });
+        activeAlters.forEach((name, index) => {
+            createAlterMesh(name, index);
+        });
+    }
+
     function updateReadout() {
-        const synEl = document.getElementById('val-synergy');
-        const driftEl = document.getElementById('val-drift');
+        const modeEl = document.getElementById('val-mode');
+        const compEl = document.getElementById('val-complex');
         const loadEl = document.getElementById('val-load');
-        const protoEl = document.getElementById('val-proto');
-        const listEl = document.getElementById('neural-readout');
+        const listEl = document.getElementById('hierarchy-list');
+        const readoutEl = document.getElementById('neural-readout');
 
         document.getElementById('active-count').innerText = activeAlters.length + " ACTIVE";
+        listEl.innerHTML = "";
         
         if (activeAlters.length === 0) {
-            synEl.innerText = "--"; driftEl.innerText = "--"; loadEl.innerText = "--"; protoEl.innerText = "STANDBY";
-            listEl.innerHTML = "Waiting for neural injection...";
-            updateBars(100, 0);
+            modeEl.innerText = "--"; compEl.innerText = "--"; loadEl.innerText = "--";
+            readoutEl.innerHTML = "Waiting for neural injection...";
             return;
         }
 
-        let totalEnergy = 0, totalImpulse = 0, totalDissoc = 0, totalAnxiety = 0;
-        let impulses = [];
-        
-        activeAlters.forEach(n => {
-            let s = DB[n].stats;
-            totalEnergy += s.e;
-            totalImpulse += s.i;
-            totalDissoc += s.d;
-            totalAnxiety += s.a;
-            impulses.push(s.i);
-        });
-        
-        const count = activeAlters.length;
-        const avgEnergy = totalEnergy / count;
-        const avgImpulse = totalImpulse / count;
-        const avgDissoc = totalDissoc / count;
-        const avgAnxiety = totalAnxiety / count;
-
-        let impulseRange = Math.max(...impulses) - Math.min(...impulses);
-        let synergyScore = Math.max(0, 100 - (impulseRange * 10));
-        let driftScore = avgDissoc;
-        let loadScore = (avgEnergy + avgAnxiety) / 2;
-
-        let protocol = "MAINTENANCE";
-        if (driftScore > 7) protocol = "GROUNDING";
-        else if (avgAnxiety > 7) protocol = "DE-ESCALATION";
-        else if (avgEnergy > 7 && avgImpulse > 7) protocol = "PHYSICAL VENT";
-        else if (synergyScore > 70 && avgEnergy > 5) protocol = "DEEP WORK";
-        else if (avgEnergy < 3) protocol = "REST / RECOVERY";
-
-        synEl.innerText = Math.round(synergyScore) + "%";
-        synEl.className = "console-data " + (synergyScore > 70 ? "stat-good" : (synergyScore > 40 ? "stat-warn" : "stat-crit"));
-
-        driftEl.innerText = driftScore.toFixed(1) + "/10";
-        driftEl.className = "console-data " + (driftScore < 3 ? "stat-good" : (driftScore < 6 ? "stat-warn" : "stat-crit"));
-
-        loadEl.innerText = Math.round(loadScore * 10) + "%";
-        loadEl.className = "console-data " + (loadScore < 7 ? "stat-good" : "stat-crit");
-
-        protoEl.innerText = protocol;
-        protoEl.className = "console-data stat-neutral"; 
-        if(protocol === "DEEP WORK") protoEl.classList.add('stat-good');
-        if(protocol === "GROUNDING" || protocol === "DE-ESCALATION") protoEl.classList.add('stat-crit');
-
-        updateBars(synergyScore, avgEnergy);
-
-        let html = "";
-        activeAlters.forEach(n => {
+        activeAlters.forEach((n, idx) => {
+            let roleClass = idx === 0 ? "role-driver" : (idx === 1 ? "role-passenger" : "role-backseat");
+            let badgeClass = idx === 0 ? "badge-driver" : (idx === 1 ? "badge-passenger" : "badge-backseat");
+            let roleName = idx === 0 ? "DRIVER" : (idx === 1 ? "PASSENGER" : "BACKSEAT");
             let d = DB[n];
-            html += `<div style="margin-bottom:6px; padding-left:8px; border-left:2px solid ${d.c}">
-                <div style="font-weight:bold; color:${d.c}">${n}</div>
-                <div style="color:#888;">E:${d.stats.e} | I:${d.stats.i} | A:${d.stats.a}</div>
-            </div>`;
-        });
-        listEl.innerHTML = html;
-    }
 
-    function updateBars(cohesion, energy) {
-        const cBar = document.getElementById('cohesion-bar');
-        const mBar = document.getElementById('mood-bar');
-        cohesion = Math.max(0, Math.min(100, cohesion));
-        cBar.style.width = cohesion + "%";
-        document.getElementById('cohesion-val').innerText = Math.round(cohesion) + "%";
-        cBar.className = "meter-fill";
-        if(cohesion > 70) cBar.classList.add('sys-good');
-        else if(cohesion > 40) cBar.classList.add('sys-warn');
-        else cBar.classList.add('sys-danger');
+            // Opacity Label
+            let opPct = idx <= 1 ? "100" : Math.round((Math.max(0.6, 1.0 - ((idx - 1) * 0.05))) * 100);
+
+            let html = `
+                <div class="role-card ${roleClass}">
+                    <div class="role-info">
+                        <div class="role-badge ${badgeClass}">${roleName}</div>
+                        <div>
+                            <div class="role-name" style="color:${d.c}">${n}</div>
+                            <div style="font-size:9px; color:#666">E:${d.stats.e} | P:${opPct}%</div>
+                        </div>
+                    </div>
+                    <div class="role-actions">
+                        ${idx > 0 ? `<button class="act-btn" onclick="moveUp(${idx})">▲</button>` : ''}
+                        ${idx < activeAlters.length-1 ? `<button class="act-btn" onclick="moveDown(${idx})">▼</button>` : ''}
+                        <button class="act-btn btn-del" onclick="rem('${n}')">✕</button>
+                    </div>
+                </div>`;
+            listEl.innerHTML += html;
+        });
+
+        let driver = DB[activeAlters[0]];
+        let driverMode = driver.stats.e > 7 ? "HIGH ENERGY" : (driver.stats.a > 7 ? "ANXIOUS" : (driver.stats.d > 7 ? "DISSOCIATED" : "BALANCED"));
+        modeEl.innerText = driverMode;
+        modeEl.className = "console-data " + (driverMode==="BALANCED" ? "stat-good" : (driverMode==="HIGH ENERGY" ? "stat-warn" : "stat-crit"));
+
+        let complexity = (350 + (activeAlters.length > 1 ? 150 : 0)) * (activeAlters.length/2);
+        compEl.innerText = Math.round(complexity) + " NODES";
         
-        let moodPct = energy * 10;
-        mBar.style.width = moodPct + "%";
-        let label = energy > 7 ? "MANIC" : (energy < 3 ? "DEPRESSED" : "STABLE");
-        let col = energy > 7 ? "#ff4444" : (energy < 3 ? "#4444ff" : "#00ff88");
-        mBar.style.background = col;
-        document.getElementById('mood-val').innerText = label;
-        document.getElementById('mood-val').style.color = col;
+        let totalLoad = 0;
+        activeAlters.forEach((n, i) => {
+            let mult = i === 0 ? 1.0 : (i === 1 ? 0.6 : 0.2); 
+            totalLoad += (DB[n].stats.e + DB[n].stats.a) * mult;
+        });
+        
+        loadEl.innerText = Math.round(totalLoad) + " UNITS";
+        loadEl.className = totalLoad > 20 ? "console-data stat-crit" : "console-data stat-good";
+
+        readoutEl.innerHTML = `Neural topography remapped.<br>Primary Driver: <span style="color:${driver.c}">${activeAlters[0]}</span><br>Signal Priority optimized.`;
     }
 
     function addAlter() {
@@ -625,21 +574,27 @@
         const name = document.getElementById('alter-select').value;
         if(activeAlters.includes(name)) return;
         activeAlters.push(name);
-        const chip = document.createElement('div');
-        chip.className = 'chip';
-        chip.innerHTML = `<div class="chip-dot" style="background:${DB[name].c}"></div> ${name} <span class="chip-x" onclick="rem('${name}', this)">✕</span>`;
-        document.getElementById('active-list').appendChild(chip);
-        createAlterMesh(name);
+        regenerateScene();
         updateReadout();
     }
 
-    window.rem = function(name, el) {
+    window.rem = function(name) {
         activeAlters = activeAlters.filter(n=>n!==name);
-        el.parentElement.remove();
-        if(VISUAL_OBJECTS[name]) {
-            brainGroup.remove(VISUAL_OBJECTS[name]);
-            delete VISUAL_OBJECTS[name];
-        }
+        regenerateScene();
+        updateReadout();
+    }
+
+    window.moveUp = function(idx) {
+        if(idx<=0) return;
+        [activeAlters[idx-1], activeAlters[idx]] = [activeAlters[idx], activeAlters[idx-1]];
+        regenerateScene();
+        updateReadout();
+    }
+
+    window.moveDown = function(idx) {
+        if(idx>=activeAlters.length-1) return;
+        [activeAlters[idx+1], activeAlters[idx]] = [activeAlters[idx], activeAlters[idx+1]];
+        regenerateScene();
         updateReadout();
     }
 
@@ -649,74 +604,52 @@
         camera.lookAt(0,0,0);
     }
 
+    // --- INTERACTION ---
     let isDragging=false, prevMouse={x:0, y:0};
-    let initialPinchDist = null;
-    let initialCamZ = 55;
-
-    function getPinchDist(e) {
-        let dx = e.touches[0].clientX - e.touches[1].clientX;
-        let dy = e.touches[0].clientY - e.touches[1].clientY;
-        return Math.sqrt(dx*dx + dy*dy);
-    }
     
     function setupInteraction() {
         const vp = document.getElementById('viewport');
-        
-        // MOUSE
-        vp.addEventListener('mousedown', e=>{ prevMouse={x:e.clientX, y:e.clientY}; if(e.button===0) isDragging=true; });
-        document.addEventListener('mouseup', ()=>{ isDragging=false; });
-        document.addEventListener('mousemove', e=>{
-            const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y;
-            if(isDragging) {
-                brainGroup.rotation.y += dx*0.005;
-                brainGroup.rotation.x += dy*0.005;
-            }
-            prevMouse={x:e.clientX, y:e.clientY};
+
+        vp.addEventListener('mousedown', e=>{ 
+            prevMouse={x:e.clientX, y:e.clientY}; 
+            if(e.button===0) isDragging=true; 
         });
 
-        // TOUCH (Mobile)
-        vp.addEventListener('touchstart', e=>{ 
-            if(e.touches.length === 1) {
-                prevMouse={x:e.touches[0].clientX, y:e.touches[0].clientY}; 
-                isDragging=true; 
-            } else if (e.touches.length === 2) {
-                isDragging = false; // Stop rotating
-                initialPinchDist = getPinchDist(e);
-                initialCamZ = camera.position.z;
-            }
-        }, {passive: false});
-        
-        document.addEventListener('touchend', ()=>{ 
-            isDragging=false; 
-            initialPinchDist = null; 
-        });
-        
-        document.addEventListener('touchmove', e=>{
-            // ONE FINGER ROTATE
-            if(isDragging && e.touches.length === 1) {
-                e.preventDefault(); 
-                const dx=e.touches[0].clientX-prevMouse.x;
-                const dy=e.touches[0].clientY-prevMouse.y;
+        document.addEventListener('mouseup', ()=>{ isDragging=false; });
+
+        document.addEventListener('mousemove', e=>{
+            if(isDragging) {
+                const dx=e.clientX-prevMouse.x;
+                const dy=e.clientY-prevMouse.y;
                 brainGroup.rotation.y += dx*0.005;
                 brainGroup.rotation.x += dy*0.005;
-                prevMouse={x:e.touches[0].clientX, y:e.touches[0].clientY};
+                prevMouse={x:e.clientX, y:e.clientY};
             }
-            // TWO FINGER ZOOM
-            else if (e.touches.length === 2 && initialPinchDist) {
-                e.preventDefault();
-                let newDist = getPinchDist(e);
-                let delta = initialPinchDist - newDist;
-                
-                // Sensitivity multiplier
-                let newZ = initialCamZ + (delta * 0.1); 
-                // Clamp zoom
-                newZ = Math.max(10, Math.min(newZ, 100));
-                
-                camera.position.z = newZ;
+        });
+
+        vp.addEventListener('touchstart', e => {
+            e.preventDefault(); 
+            if (e.touches.length === 1) {
+                isDragging = true;
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }
-        }, {passive: false});
+        }, { passive: false });
+
+        vp.addEventListener('touchmove', e => {
+            e.preventDefault(); 
+            if (isDragging && e.touches.length === 1) {
+                const dx = e.touches[0].clientX - prevMouse.x;
+                const dy = e.touches[0].clientY - prevMouse.y;
+                brainGroup.rotation.y += dx * 0.008; 
+                brainGroup.rotation.x += dy * 0.008;
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => { isDragging = false; });
 
         vp.addEventListener('wheel', e=>{ camera.position.z += e.deltaY*0.05; });
+        
         window.addEventListener('resize', ()=>{
             camera.aspect=vp.clientWidth/vp.clientHeight;
             camera.updateProjectionMatrix();
@@ -724,9 +657,73 @@
         });
     }
 
+    // --- PULSE ANIMATION SYSTEM ---
+    const pulseGeo = new THREE.SphereGeometry(0.08, 4, 4);
+    const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White hot pulse
+
+    function updatePulses() {
+        Object.keys(VISUAL_OBJECTS).forEach(key => {
+            const grp = VISUAL_OBJECTS[key];
+            const data = grp.userData;
+            if (!data.paths || data.paths.length === 0) return;
+
+            // 1. SPAWN LOGIC based on Rank
+            // Rank 0 (Driver): Very frequent (e.g. every 5 frames)
+            // Rank 1: Half freq (10 frames)
+            // Rank 2: 20 frames...
+            const spawnRate = Math.floor(5 * Math.pow(2, data.rank)); 
+            
+            data.pulseTimer++;
+            if(data.pulseTimer >= spawnRate) {
+                data.pulseTimer = 0;
+                // Spawn a pulse on a random path
+                const pathIdx = Math.floor(Math.random() * data.paths.length);
+                const mesh = new THREE.Mesh(pulseGeo, pulseMat);
+                grp.add(mesh);
+                
+                data.pulses.push({
+                    mesh: mesh,
+                    pathIdx: pathIdx,
+                    nodeIdx: 0, // current point in path
+                    progress: 0 // 0.0 to 1.0 between nodes
+                });
+            }
+
+            // 2. MOVEMENT LOGIC
+            // Travel speed
+            const speed = 0.2; 
+
+            for(let i = data.pulses.length - 1; i >= 0; i--) {
+                const p = data.pulses[i];
+                const path = data.paths[p.pathIdx];
+                
+                p.progress += speed;
+                
+                if(p.progress >= 1.0) {
+                    p.progress = 0;
+                    p.nodeIdx++;
+                }
+
+                if(p.nodeIdx >= path.length - 1) {
+                    // Reached end of dendrite
+                    grp.remove(p.mesh);
+                    data.pulses.splice(i, 1);
+                } else {
+                    // Interpolate position
+                    const p1 = path[p.nodeIdx];
+                    const p2 = path[p.nodeIdx + 1];
+                    p.mesh.position.lerpVectors(p1, p2, p.progress);
+                }
+            }
+        });
+    }
+
     function animate() {
         requestAnimationFrame(animate);
-        if(!isDragging && !initialPinchDist) brainGroup.rotation.y += 0.002;
+        if(!isDragging) brainGroup.rotation.y += 0.002;
+        
+        updatePulses(); // RUN PARTICLE SYSTEM
+        
         renderer.render(scene, camera);
     }
 
@@ -734,5 +731,3 @@
 </script>
 </body>
 </html>
-
-
